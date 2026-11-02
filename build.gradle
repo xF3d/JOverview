@@ -62,3 +62,10 @@ jar {
 tasks.named('jar') {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
+
+tasks.test {
+    reports {
+        html.required = true
+        junitXml.required = true
+    }
+}
