@@ -36,6 +36,7 @@ public interface Translator extends NodeHandler {
 
         int threadCount = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
 
+        FileLogger.LOGGER.info("File detected: " + files.size());
         long start = System.currentTimeMillis();
 
         List<CompilationUnit> compilationUnits = new ArrayList<>();
