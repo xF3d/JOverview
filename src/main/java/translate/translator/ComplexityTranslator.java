@@ -2,8 +2,6 @@ package translate.translator;
 
 import ai.AIManager;
 import ai.Prompts;
-import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.*;
 import file.Config;
 import lombok.Getter;
@@ -25,6 +23,7 @@ import translate.smells.method.LongMethodEvaluator;
 import translate.structure.complexity.ComplexityClass;
 import translate.structure.complexity.ComplexityMethod;
 import translate.structure.complexity.MethodLike;
+import translate.structure.pkg.PackageManager;
 import translate.translator.exceptions.InvalidSelectedClassException;
 import translate.translator.exceptions.InvalidSelectedConstructorException;
 import translate.translator.exceptions.InvalidSelectedMethodException;
@@ -38,9 +37,7 @@ import java.util.concurrent.*;
 public class ComplexityTranslator extends SimpleTranslator {
 
     private CompletableFuture<SystemResultAggregator> systemResult;
-    private final Set<CompilationUnit> allCompilationUnits = new HashSet<>();
 
-    private final Map<String, TypeDeclaration<?>> testClassMap = new ConcurrentHashMap<>();
     private final Map<String, ComplexityClass> classResultMap = new ConcurrentHashMap<>();
 
     private final Map<String, Map<String, ComplexityMethod>> methodResultMap = new ConcurrentHashMap<>();
@@ -90,32 +87,12 @@ public class ComplexityTranslator extends SimpleTranslator {
     private Map<String, ComplexityClass> problematicClasses;
 
     @Override
-    public void handleCompilationUnit(CompilationUnit unit) {
-        allCompilationUnits.add(unit);
-    }
-
-    @Override
     public void translateFiles(List<File> files) throws FileNotFoundException {
         super.translateFiles(files);
 
         int threads = Runtime.getRuntime().availableProcessors();
         ExecutorService executor = Executors.newFixedThreadPool(threads);
         computeEverything(executor);
-    }
-
-    @Override
-    public void addNode(Node node) {
-        super.addNode(node);
-
-        if (!(node instanceof TypeDeclaration<?> decl)) throw new IllegalArgumentException("Should never happen");
-
-        String fullName = formatter.fullPackageName(node.findCompilationUnit().orElseThrow(), node);
-
-        var skipTests = Config.getInstance().getConfig().getSkipTests();
-        if (skipTests.isTestClass(fullName, decl)) {
-            classMap.remove(fullName);
-            testClassMap.put(fullName, decl);
-        }
     }
 
     private void computeEverything(ExecutorService executor) {
@@ -137,9 +114,14 @@ public class ComplexityTranslator extends SimpleTranslator {
 
 
         var completeClasses = new HashMap<>(classMap);
-        completeClasses.putAll(testClassMap);
 
-        var classResultFutures = classResultMap.values().stream().map(ComplexityClass::getComplexityResult).toList();
+        var filter = Config.getInstance().getConfig().getPackageFilter();
+        var classResultFutures = classResultMap.values().stream()
+                .filter(complexityClass -> {
+                    String name = PackageManager.resolveTypeDeclaration(complexityClass.getNode());
+                    return filter.isValid(name);
+                })
+                .map(ComplexityClass::getComplexityResult).toList();
 
         // system metrics
         var systemResultsOnly = CompletableFuture.supplyAsync(() -> {
@@ -301,7 +283,6 @@ public class ComplexityTranslator extends SimpleTranslator {
         for (var entry : classResultMap.entrySet()) {
             String fullPackageName = entry.getKey();
             if (!filter.isValid(fullPackageName)) continue;
-            if (testClassMap.containsKey(fullPackageName)) continue;
 
             ComplexityClass clazz = entry.getValue();
             ComplexityResultAggregator results = clazz.evalResult();
@@ -322,7 +303,6 @@ public class ComplexityTranslator extends SimpleTranslator {
             HashMap<String, ComplexityMethod> methodInvalidMap = new HashMap<>();
 
             if (!filter.isValid(classFqn)) continue;
-            if (testClassMap.containsKey(classFqn)) continue;
 
             for (var classEntry : methodEntry.getValue().entrySet()) {
                 String signature = classEntry.getKey();
@@ -443,7 +423,8 @@ public class ComplexityTranslator extends SimpleTranslator {
 
 
     public String[] getClassesArray() {
-        return classResultMap.keySet().toArray(String[]::new);
+        var filter = Config.getInstance().getConfig().getPackageFilter();
+        return classResultMap.keySet().stream().filter(filter::isValid).toArray(String[]::new);
     }
 
     public String[] getMethodsArray(String className) {

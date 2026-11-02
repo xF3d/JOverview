@@ -4,8 +4,8 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
+import file.Config;
 import lombok.Getter;
-import translate.complexity.evaluators.system.NumberOfTestsEvaluator;
 import translate.component.formatter.MemberFormatter;
 import translate.structure.complexity.MethodLike;
 import translate.structure.pkg.PackageManager;
@@ -33,7 +33,12 @@ public class SimpleTranslator implements Translator {
     public void addNode(Node node) {
         if (!(node instanceof TypeDeclaration<?> decl)) throw new IllegalArgumentException("Should never happen");
 
-        String fullName = formatter.fullPackageName(node.findCompilationUnit().orElseThrow(), node);
+        String fullName = PackageManager.resolveTypeDeclaration(decl);
+        var skipTests = Config.getInstance().getConfig().getSkipTests();
+        if (skipTests.isTestClass(fullName, decl)) {
+            return;
+        }
+
         classMap.put(fullName, decl);
 
         Map<String, MethodDeclaration> methods = methodMap.get(fullName);

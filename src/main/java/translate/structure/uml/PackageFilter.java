@@ -22,7 +22,8 @@ public class PackageFilter {
             if (inWhitelist) break;
         }
 
-        if (!inWhitelist && !whitelist.isEmpty()) return false;
+        boolean emptyWhitelist = whitelist.isEmpty();
+        if (!inWhitelist && !emptyWhitelist) return false;
 
         for (var bl : blacklist) {
             if (entry.startsWith(bl)) {
@@ -30,6 +31,8 @@ public class PackageFilter {
             }
         }
 
-        return true;
+        if (emptyWhitelist) return true;
+
+        return inWhitelist;
     }
 }
