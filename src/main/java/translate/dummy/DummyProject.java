@@ -44,7 +44,7 @@ public class DummyProject {
         ComplexityTranslator tempTranslator = new ComplexityTranslator();
         tempTranslator.execute(dummyLocation.toFile());
 
-        new CompareFrame(originalTranslator, tempTranslator);
+        new CompareFrame(originalTranslator, tempTranslator, diffs.size());
 
         recopy();
     }

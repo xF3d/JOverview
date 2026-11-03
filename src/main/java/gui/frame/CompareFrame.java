@@ -4,19 +4,21 @@ import gui.components.ClassTableMetricsPanel;
 import gui.components.ComplexityGridPanel;
 import gui.components.ReferenceController;
 import gui.components.SystemChartPanel;
+import lombok.Getter;
 import translate.complexity.result.BoundedResult;
-import translate.complexity.result.ComplexityMetricResult;
 import translate.translator.ComplexityTranslator;
 
 import javax.swing.*;
 import java.util.List;
 
+@Getter
 public class CompareFrame extends JFrame {
     private final JPanel content = new JPanel();
 
     public CompareFrame(
             ComplexityTranslator originalTranslator,
-            ComplexityTranslator dummyTranslator
+            ComplexityTranslator dummyTranslator,
+            int changesApplied
     ) {
         super("Comparing");
 
@@ -24,6 +26,7 @@ public class CompareFrame extends JFrame {
         var displayDummy = dummyTranslator.evaluateSystem().displayList();
 
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.add(new JLabel("Changes applied: " + changesApplied));
 
         SystemChartPanel chartPanel = new SystemChartPanel();
         chartPanel.addProject("Original", displayOriginal[0]);
