@@ -139,13 +139,17 @@ public class AIRefactorFrame extends JFrame {
     private JMenu setupSaveMenu() {
         JMenu saveMenu = new JMenu("Save");
 
-        JMenuItem exportPrompt = new JMenuItem("Export");
-        exportPrompt.addActionListener(this::export);
+        JMenuItem exportAllPrompt = new JMenuItem("Export All");
+        exportAllPrompt.addActionListener((_) -> export(true));
+
+        JMenuItem exportSelectedPrompt = new JMenuItem("Export Selected");
+        exportSelectedPrompt.addActionListener((_) -> export(false));
 
         JMenuItem importPrompt = new JMenuItem("Import");
         importPrompt.addActionListener(this::importAction);
 
-        saveMenu.add(exportPrompt);
+        saveMenu.add(exportAllPrompt);
+        saveMenu.add(exportSelectedPrompt);
         saveMenu.add(importPrompt);
 
         return saveMenu;
@@ -284,7 +288,7 @@ public class AIRefactorFrame extends JFrame {
         }
     }
 
-    public void export(ActionEvent e) {
+    public void export(boolean all) {
         if (responses == null) FileLogger.LOGGER.warning("Empty responses");
 
         JFileChooser chooser = new JFileChooser();
@@ -296,9 +300,15 @@ public class AIRefactorFrame extends JFrame {
 
         File exportFile = chooser.getSelectedFile();
         try {
-            JacksonMapper.getMapper()
-                    .writerFor(ApplicableDiffTypeList.TYPE)
-                    .writeValue(exportFile, responses);
+            if (all) {
+                JacksonMapper.getMapper()
+                        .writerFor(ApplicableDiffTypeList.TYPE)
+                        .writeValue(exportFile, responses);
+            } else {
+                JacksonMapper.getMapper()
+                        .writerFor(ApplicableDiffTypeList.TYPE)
+                        .writeValue(exportFile, getSelected());
+            }
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(
                     null,
@@ -410,7 +420,7 @@ public class AIRefactorFrame extends JFrame {
         cards.repaint();
     }
 
-    public List<ApplicableDiff> getSelected() {
+    public ArrayList<ApplicableDiff> getSelected() {
         ArrayList<ApplicableDiff> selectedResponses = new ArrayList<>();
         for (int i = 0; i < responses.size(); i++) {
             if (!selected[i]) continue;
