@@ -41,11 +41,11 @@ public class SystemStatus extends JFrame {
         systemChartPanel.addProject("System", chartResults);
 
         JPanel problematicDisplay = new JPanel();
-        problematicDisplay.setLayout(new BoxLayout(problematicDisplay, BoxLayout.X_AXIS));
+        problematicDisplay.setLayout(new BoxLayout(problematicDisplay, BoxLayout.Y_AXIS));
 
-        problematicDisplay.add(new JLabel("Problematic classes: " + translator.getProblematicClasses().size() + " Token Estimate: " + translator.fixClassInputEstimate()));
-        problematicDisplay.add(new JLabel("Problematic methods: " + translator.getProblematicMethods().size() + " Token Estimate: " + translator.fixMethodInputEstimate()));
-
+        problematicDisplay.add(new JLabel("Problematic classes: " + translator.getProblematicClasses().size() + " Token Estimate: " + translator.fixClassInputEstimate() + "M Tokens"));
+        problematicDisplay.add(new JLabel("Problematic methods: " + translator.getProblematicMethods().size() + " Token Estimate: " + translator.fixMethodInputEstimate() + "M Tokens"));
+        problematicDisplay.add(new JLabel("<html><br><br><br><br><br></html>"));
 
         this.content.add(systemChartPanel);
         this.content.add(complexityGridPanel);

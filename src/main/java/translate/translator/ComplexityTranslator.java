@@ -27,6 +27,7 @@ import translate.structure.pkg.PackageManager;
 import translate.translator.exceptions.InvalidSelectedClassException;
 import translate.translator.exceptions.InvalidSelectedConstructorException;
 import translate.translator.exceptions.InvalidSelectedMethodException;
+import util.DoubleFormatter;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -433,18 +434,19 @@ public class ComplexityTranslator extends SimpleTranslator {
 
 
     // x M tokens
-    public double fixClassInputEstimate() {
+    public String fixClassInputEstimate() {
         double count = 0;
         for (var clazz : getProblematicClasses().values()) {
             String mainMessage = Prompts.formattedClassContext(this, clazz);
             count += AIManager.estimateTokens(mainMessage);
         }
 
-        return count / 1_000_000;
+        double amount = count / 1_000_000;
+        return DoubleFormatter.formatPrecise(amount);
     }
 
     // x M tokens
-    public double fixMethodInputEstimate() {
+    public String fixMethodInputEstimate() {
         double count = 0;
         for (var clazzEntry : getProblematicMethods().entrySet()) {
             ComplexityClass clazz = getClass(clazzEntry.getKey());
@@ -455,7 +457,8 @@ public class ComplexityTranslator extends SimpleTranslator {
             }
         }
 
-        return count / 1_000_000;
+        double amount = count / 1_000_000;
+        return DoubleFormatter.formatPrecise(amount);
     }
 
     public Map<String, Map<String, ComplexityMethod>> getProblematicMethods() {
