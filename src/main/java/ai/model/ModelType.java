@@ -3,6 +3,7 @@ package ai.model;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import file.TomlUtils;
 import org.tomlj.TomlTable;
 
 import java.time.Duration;
@@ -18,7 +19,7 @@ public record ModelType(APIType type, String modelName, String url, String apiKe
             String verifyKey = table.getString("key");
             TomlTable extraParams = table.getTableOrEmpty("extra_params");
 
-            return new ModelType(verifyType, verifyName, verifyUrl, verifyKey, extraParams.toMap());
+            return new ModelType(verifyType, verifyName, verifyUrl, verifyKey, TomlUtils.toml2map(extraParams));
         } catch (Exception ingored) {
             return null;
         }
