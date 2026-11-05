@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executor;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,6 +36,7 @@ public class AIRefactorFrame extends JFrame {
     private final ComplexityTranslator complexityTranslator;
     private ExecutorService aiExecutor;
 
+    private final JLabel correctCounter;
     private final JPanel cards;
 
     private int currentCard = 0;
@@ -60,11 +61,13 @@ public class AIRefactorFrame extends JFrame {
         this.aiExecutor = VirtualThreadExecutor.create();
 
         CardLayout cardLayout = new CardLayout();
+        this.correctCounter = new JLabel();
         this.cards = new JPanel(cardLayout);
         setupKeys(cards, cardLayout);
         setupMenu();
 
-        super.add(cards);
+        super.add(correctCounter, BorderLayout.NORTH);
+        super.add(cards, BorderLayout.CENTER);
         super.setVisible(true);
         addWindowListener(new WindowAdapter() {
             @Override
@@ -74,6 +77,7 @@ public class AIRefactorFrame extends JFrame {
             }
         });
         FrameManager.addFrame(this);
+        updateCounter();
     }
 
     private void setupKeys(JPanel cards, CardLayout layout) {
@@ -418,6 +422,7 @@ public class AIRefactorFrame extends JFrame {
         cards.add(panel, pageNString);
         cards.revalidate();
         cards.repaint();
+        updateCounter();
     }
 
     public ArrayList<ApplicableDiff> getSelected() {
@@ -432,5 +437,15 @@ public class AIRefactorFrame extends JFrame {
         }
 
         return selectedResponses;
+    }
+
+    private synchronized void updateCounter() {
+        int amount = Math.toIntExact(
+                responses.stream()
+                        .filter(Objects::nonNull)
+                        .filter(ApplicableDiff::isValid)
+                        .count()
+        );
+        correctCounter.setText("Valid suggestions: " + amount);
     }
 }
