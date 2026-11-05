@@ -44,6 +44,7 @@ public class AIRefactorFrame extends JFrame {
 
     private ArrayList<ApplicableDiff> responses = new ArrayList<>();
     private boolean[] selected = new boolean[0];
+    private int correctAmount = 0;
 
     private final AtomicInteger generation = new AtomicInteger(0);
     private DummyProject dummyProject;
@@ -219,9 +220,7 @@ public class AIRefactorFrame extends JFrame {
             totalSize += methodValues.size();
         }
 
-        final int finalTotalSize = totalSize;
-        responses = new ArrayList<>(finalTotalSize);
-        selected = new boolean[finalTotalSize];
+        initialize(totalSize);
 
         int gen = generation.get();
         for (var classEntry : methods.entrySet()) {
@@ -399,6 +398,7 @@ public class AIRefactorFrame extends JFrame {
         }
 
         selected = new boolean[size];
+        correctAmount = 0;
     }
 
     public synchronized void addCard(ApplicableDiff diff) {
@@ -422,6 +422,8 @@ public class AIRefactorFrame extends JFrame {
         cards.add(panel, pageNString);
         cards.revalidate();
         cards.repaint();
+        if (diff.isValid()) correctAmount++;
+
         updateCounter();
     }
 
@@ -440,12 +442,6 @@ public class AIRefactorFrame extends JFrame {
     }
 
     private synchronized void updateCounter() {
-        int amount = Math.toIntExact(
-                responses.stream()
-                        .filter(Objects::nonNull)
-                        .filter(ApplicableDiff::isValid)
-                        .count()
-        );
-        correctCounter.setText("Valid suggestions: " + amount);
+        correctCounter.setText("Valid suggestions: " + correctAmount);
     }
 }
