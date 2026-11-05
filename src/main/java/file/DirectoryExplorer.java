@@ -1,5 +1,7 @@
 package file;
 
+import translate.TranslatorsConfig;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayDeque;
@@ -21,14 +23,18 @@ public class DirectoryExplorer {
         Deque<File> stack = new ArrayDeque<>();
         stack.push(root);
 
+        TranslatorsConfig cfg = Config.getInstance().getConfig();
         ArrayList<File> filesFound = new ArrayList<>();
         while (!stack.isEmpty()) {
             File file = stack.pop();
             if (!file.isDirectory()) {
+                FileLogger.LOGGER.info("Adding file: " + file);
                 filesFound.add(file);
                 continue;
             }
 
+
+            if (cfg.isSkipDir(file)) continue;
             File[] files = file.listFiles();
             if (files == null) {
                 continue;
