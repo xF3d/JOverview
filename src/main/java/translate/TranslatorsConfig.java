@@ -11,7 +11,11 @@ import translate.complexity.evaluators.system.NumberOfTestsEvaluator;
 import translate.component.formatter.MemberFormatter;
 import translate.structure.uml.PackageFilter;
 
-import java.util.Locale;
+import java.io.File;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Accessors(chain = true)
 @Setter
@@ -26,6 +30,7 @@ public class TranslatorsConfig {
     private boolean showAssociations;
 
     private final PackageFilter packageFilter = new PackageFilter();
+    private final Set<String> skipDirectories = new HashSet<>();
 
     private TestFiltering skipTests;
 
@@ -71,5 +76,17 @@ public class TranslatorsConfig {
     public TranslatorsConfig withWhitelist(String entry) {
         packageFilter.add2Wl(entry.replace(".", MemberFormatter.PACKAGE_DELIMITER));
         return this;
+    }
+
+    public void addSkipDirectory(String dir) {
+        skipDirectories.add(dir);
+    }
+
+    public boolean isSkipDir(File file) {
+        Path path = file.toPath();
+
+        return StreamSupport.stream(path.spliterator(), false)
+                .map(Path::toString)
+                .anyMatch(skipDirectories::contains);
     }
 }

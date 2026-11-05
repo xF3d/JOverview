@@ -95,6 +95,11 @@ public class Config {
             config.withBlacklist(blArray.getString(i));
         }
 
+        var skipDirArray = result.getArrayOrEmpty("translators.skip_directories");
+        for (int i = 0; i < skipDirArray.size(); i++) {
+            config.addSkipDirectory(skipDirArray.getString(i));
+        }
+
         String fileSkipTests = result.getString("translators.skip_tests", () -> "NONE").toUpperCase(Locale.ROOT);
         config.setSkipTests(TranslatorsConfig.TestFiltering.valueOf(fileSkipTests));
 

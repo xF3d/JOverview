@@ -5,11 +5,10 @@ import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.resolution.SymbolResolver;
-import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
+import file.Config;
 import lombok.Getter;
 
 import java.io.File;
@@ -51,8 +50,11 @@ public class ResolverUtils {
         Stack<File> fileList = new Stack<>();
         fileList.add(mainSource);
 
+        TranslatorsConfig cfg = Config.getInstance().getConfig();
         while (!fileList.isEmpty()) {
             File sub = fileList.pop();
+
+            if (cfg.isSkipDir(sub)) continue;
 
             File srcMainJava = sourceOf(sub);
             if (srcMainJava.exists() && srcMainJava.isDirectory()) {
@@ -61,7 +63,7 @@ public class ResolverUtils {
                 continue;
             }
 
-            var subFiles = sub.listFiles();
+            File[] subFiles = sub.listFiles();
             if (subFiles != null) {
                 fileList.addAll(List.of(subFiles));
             }

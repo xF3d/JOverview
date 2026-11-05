@@ -7,6 +7,7 @@ allow_annotations = true
 skip_tests = "NONE" # NONE, NORMAL, AGGRESSIVE (normal matches test methods, aggressive matches all test menstions in FQN)
 package_whitelist = []
 package_blacklist = []
+skip_directories = []
 
 [uml_translator]
 show_methods = true
