@@ -67,37 +67,39 @@ public record DiffClassResponse(
             return;
         }
 
-        Path projectRoot = getSrcRoot(toUpdatePath);
-        List<CompilationUnit> addedClasses = parseAdded();
-
-        for (var clazz : addedClasses) {
-            applyAddClass(projectRoot, clazz);
-        }
-
-        CompilationUnit originalCu = newTranslator.getTypeDeclaration(clazz)
-                .findCompilationUnit().orElseThrow();
-
-        TypeDeclaration<?> originalClazz = originalCu.findFirst(
-                TypeDeclaration.class,
-                c -> PackageManager.resolveTypeDeclaration(c).equals(clazz)
-        ).orElseThrow();
-
-        NodeList<ImportDeclaration> imports = parseImports();
-        if (imports == null) throw new RuntimeException("impossible");
-        imports.forEach(originalCu::addImport);
-
-        ClassOrInterfaceDeclaration changes = parseChanges();
-        if (changes == null) throw new RuntimeException("impossible");
-
-        getChildren(changes, MethodDeclaration.class).forEach(m -> ApplicableDiff.addOrReplaceMethod(m, originalClazz));
-        getChildren(changes, TypeDeclaration.class).forEach(originalClazz::addMember);
-        getChildren(changes, FieldDeclaration.class).forEach(originalClazz::addMember);
 
         try {
+            Path projectRoot = getSrcRoot(toUpdatePath);
+            List<CompilationUnit> addedClasses = parseAdded();
+
+            for (var clazz : addedClasses) {
+                applyAddClass(projectRoot, clazz);
+            }
+
+            CompilationUnit originalCu = newTranslator.getTypeDeclaration(clazz)
+                    .findCompilationUnit().orElseThrow();
+
+            TypeDeclaration<?> originalClazz = originalCu.findFirst(
+                    TypeDeclaration.class,
+                    c -> PackageManager.resolveTypeDeclaration(c).equals(clazz)
+            ).orElseThrow();
+
+            NodeList<ImportDeclaration> imports = parseImports();
+            if (imports == null) throw new RuntimeException("impossible");
+            imports.forEach(originalCu::addImport);
+
+            ClassOrInterfaceDeclaration changes = parseChanges();
+            if (changes == null) throw new RuntimeException("impossible");
+
+            getChildren(changes, MethodDeclaration.class).forEach(m -> ApplicableDiff.addOrReplaceMethod(m, originalClazz));
+            getChildren(changes, TypeDeclaration.class).forEach(originalClazz::addMember);
+            getChildren(changes, FieldDeclaration.class).forEach(originalClazz::addMember);
+
             Files.writeString(toUpdatePath, originalCu.toString());
         } catch (IOException e) {
             FileLogger.LOGGER.severe("Fail during write to: " + toUpdatePath);
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -150,7 +152,7 @@ public record DiffClassResponse(
             current = current.getParent();
         }
 
-        throw new IllegalArgumentException("Could not find main project directory from: " + path);
+        return path;
     }
 
     @Override
