@@ -170,6 +170,8 @@ public record DiffClassResponse(
 
     @Override
     public boolean isValid() {
+        if (isEmpty()) return false;
+
         return parseChanges() != null && parseAdded().size() == added.size() && parseImports() != null;
     }
 
