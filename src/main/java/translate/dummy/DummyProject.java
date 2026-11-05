@@ -1,6 +1,7 @@
 package translate.dummy;
 
 import ai.reponse.ApplicableDiff;
+import file.FileLogger;
 import file.FolderSync;
 import gui.frame.CompareFrame;
 import gui.frame.MainFrame;
@@ -41,8 +42,12 @@ public class DummyProject {
             diff.apply(dummyTranslator, diff.getPath(dummyTranslator));
         }
 
+        FileLogger.LOGGER.info("Applied diffs to dummy project");
+
         ComplexityTranslator tempTranslator = new ComplexityTranslator();
         tempTranslator.execute(dummyLocation.toFile());
+
+        FileLogger.LOGGER.info("Calculating new metrics of dummy project");
 
         new CompareFrame(originalTranslator, tempTranslator, diffs.size());
 
@@ -55,6 +60,8 @@ public class DummyProject {
         for (var diff : diffs) {
             diff.apply(originalTranslator, diff.getPath(originalTranslator));
         }
+
+        FileLogger.LOGGER.info("Applied diffs to original project");
     }
 
     private void init() {
@@ -68,6 +75,7 @@ public class DummyProject {
 
         this.dummyTranslator = new SimpleTranslator();
         this.dummyTranslator.execute(dummyLocation.toFile());
+        FileLogger.LOGGER.info("Initialized translator for dummy project");
     }
 
     private void recopy() {
