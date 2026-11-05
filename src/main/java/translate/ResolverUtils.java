@@ -48,13 +48,8 @@ public class ResolverUtils {
             );
         }
 
-        File[] files = projectDirectory.listFiles();
-        if (files == null) {
-            return;
-        }
-
         Stack<File> fileList = new Stack<>();
-        fileList.addAll(List.of(files));
+        fileList.add(mainSource);
 
         while (!fileList.isEmpty()) {
             File sub = fileList.pop();
