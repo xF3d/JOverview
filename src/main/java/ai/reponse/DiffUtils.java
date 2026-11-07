@@ -24,9 +24,14 @@ public class DiffUtils {
         NodeList<BodyDeclaration<?>> members = typeDefinition.getMembers();
 
         for (int i = 0; i < members.size(); i++) {
-            var m = members.get(i);
+            BodyDeclaration<?> m = members.get(i);
             if (m instanceof MethodDeclaration md && md.getSignature().equals(newMethod.getSignature())) {
-                members.set(i, newMethod.clone());
+                MethodDeclaration toAdd = newMethod.clone();
+                // AI tends to strip throws, stop it from doing it
+                if (newMethod.getThrownExceptions().isEmpty())
+                    toAdd.setThrownExceptions(md.getThrownExceptions());
+
+                members.set(i, toAdd);
                 return;
             }
         }
