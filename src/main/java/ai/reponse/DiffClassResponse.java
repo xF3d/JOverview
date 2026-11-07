@@ -8,6 +8,7 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.expr.Name;
 import file.FileLogger;
+import translate.component.formatter.MemberFormatter;
 import translate.structure.pkg.PackageManager;
 import translate.translator.SimpleTranslator;
 import util.ProjectJavaParser;
@@ -185,17 +186,27 @@ public record DiffClassResponse(
         var allChanges = String.join("\n", changes);
 
         // sometimes the AI generates the class wrapping by itself by mistake
-        var cuResult = parser.parse(allChanges);
-        if (!cuResult.isSuccessful()) {
-            String toParser = "class DUMMY {\n"
-                    + allChanges
-                    + "\n}";
-            cuResult = parser.parse(toParser);
+        ParseResult<CompilationUnit> cuResult = parser.parse(allChanges);
+        if (cuResult.isSuccessful()) {
+            CompilationUnit cu = cuResult.getResult().orElseThrow();
+            if (cu.getTypes().stream().anyMatch(it -> PackageManager.resolveTypeDeclaration(it).equals(clazz))) {
+                return cu.getTypes().getFirst().orElseThrow();
+            }
         }
+
+
+        String toParser = "class DUMMY {\n"
+                + allChanges
+                + "\n}";
+        cuResult = parser.parse(toParser);
 
         if (cuResult.isSuccessful()) {
             CompilationUnit cu = cuResult.getResult().orElseThrow();
-            return cu.getTypes().getFirst().orElseThrow();
+
+            return cu.findFirst(
+                    ClassOrInterfaceDeclaration.class,
+                    c -> c.getNameAsString().equals("DUMMY")
+            ).orElseThrow();
         }
 
         return null;
