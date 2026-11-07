@@ -110,16 +110,17 @@ public record DiffClassResponse(
                 .map(Name::asString)
                 .orElse("");
 
-        Optional<TypeDeclaration> typeDeclOpt = cu.getChildNodes().stream()
-                .filter(TypeDeclaration.class::isInstance)
-                .map(TypeDeclaration.class::cast)
+        Optional<TypeDeclaration<?>> typeDeclOpt = cu.getTypes().stream()
                 .filter(it -> it.getAccessSpecifier() == AccessSpecifier.PUBLIC)
                 .findFirst();
-        if (typeDeclOpt.isEmpty()) return;
-
-        var typeDecl = typeDeclOpt.get();
-
-        var nameDecl = typeDecl.getNameAsString();
+        String nameDecl;
+        if (typeDeclOpt.isEmpty()) {
+            // if public class not present, any name should do, but let's pick the first class
+            nameDecl = cu.getType(0).getNameAsString();
+        } else {
+            // if public class is present, must have the same name
+            nameDecl = typeDeclOpt.get().getNameAsString();
+        }
 
         Path newFile;
         if (packageDecl.isEmpty()) {
