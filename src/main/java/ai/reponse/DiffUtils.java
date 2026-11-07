@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class DiffUtils {
-    public static <T> List<T> getChildren(ClassOrInterfaceDeclaration n, Class<T> type) {
+    public static <T> List<T> getChildren(TypeDeclaration<?> n, Class<T> type) {
         List<T> out = new ArrayList<>();
         for (var c : n.getChildNodes()) {
             if (type.isInstance(c)) {

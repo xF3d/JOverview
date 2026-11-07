@@ -88,7 +88,7 @@ public record DiffClassResponse(
             if (imports == null) throw new RuntimeException("impossible");
             imports.forEach(originalCu::addImport);
 
-            ClassOrInterfaceDeclaration changes = parseChanges();
+            TypeDeclaration<?> changes = parseChanges();
             if (changes == null) throw new RuntimeException("impossible");
 
             DiffUtils.getChildren(changes, MethodDeclaration.class).forEach(m -> DiffUtils.addOrReplaceMethod(originalClazz, m));
@@ -180,20 +180,22 @@ public record DiffClassResponse(
         return this.equals(UNCHANGED);
     }
 
-    public ClassOrInterfaceDeclaration parseChanges() {
-        String toParser = "class DUMMY {\n"
-                + String.join("\n", changes)
-                + "\n}";
+    public TypeDeclaration<?> parseChanges() {
+        var parser = ProjectJavaParser.makeParser().get();
+        var allChanges = String.join("\n", changes);
 
-        var cuResult = ProjectJavaParser.makeParser().get().parse(toParser);
+        // sometimes the AI generates the class wrapping by itself by mistake
+        var cuResult = parser.parse(allChanges);
+        if (!cuResult.isSuccessful()) {
+            String toParser = "class DUMMY {\n"
+                    + allChanges
+                    + "\n}";
+            cuResult = parser.parse(toParser);
+        }
 
         if (cuResult.isSuccessful()) {
             CompilationUnit cu = cuResult.getResult().orElseThrow();
-
-            return cu.findFirst(
-                    ClassOrInterfaceDeclaration.class,
-                    c -> c.getNameAsString().equals("DUMMY")
-            ).orElseThrow();
+            return cu.getTypes().getFirst().orElseThrow();
         }
 
         return null;
