@@ -36,8 +36,8 @@ public class ApplicableDiffTest {
 
         MethodDeclaration toAddMethod = BBBclass.getMethods().getFirst();
         MethodDeclaration testOverride = BBBclass.getMethods().get(1);
-        ApplicableDiff.addOrReplaceMethod(toAddMethod, AAAclass);
-        ApplicableDiff.addOrReplaceMethod(testOverride, AAAclass);
+        DiffUtils.addOrReplaceMethod(AAAclass, toAddMethod);
+        DiffUtils.addOrReplaceMethod(AAAclass, testOverride);
 
         Assert.assertNotNull(AAAclass.getMethodsByName("toAddMethod"));
     }

@@ -91,9 +91,9 @@ public record DiffClassResponse(
             ClassOrInterfaceDeclaration changes = parseChanges();
             if (changes == null) throw new RuntimeException("impossible");
 
-            getChildren(changes, MethodDeclaration.class).forEach(m -> ApplicableDiff.addOrReplaceMethod(m, originalClazz));
-            getChildren(changes, TypeDeclaration.class).forEach(originalClazz::addMember);
-            getChildren(changes, FieldDeclaration.class).forEach(originalClazz::addMember);
+            DiffUtils.getChildren(changes, MethodDeclaration.class).forEach(m -> DiffUtils.addOrReplaceMethod(originalClazz, m));
+            DiffUtils.getChildren(changes, TypeDeclaration.class).forEach(t -> DiffUtils.enrichClass(originalClazz, t));
+            DiffUtils.getChildren(changes, FieldDeclaration.class).forEach(originalClazz::addMember);
 
             Files.writeString(toUpdatePath, originalCu.toString());
         } catch (IOException e) {
@@ -251,16 +251,5 @@ public record DiffClassResponse(
         );
 
         return new SectionData(map).toString();
-    }
-
-    private static <T> List<T> getChildren(ClassOrInterfaceDeclaration n, Class<T> type) {
-        List<T> out = new ArrayList<>();
-        for (var c : n.getChildNodes()) {
-            if (type.isInstance(c)) {
-                out.add((T) c);
-            }
-        }
-
-        return out;
     }
 }

@@ -2,8 +2,6 @@ package ai.reponse;
 
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.NodeList;
-import com.github.javaparser.ast.body.BodyDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import file.FileLogger;
@@ -15,7 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public record DiffMethodResponse(
         String clazz,
@@ -153,7 +150,7 @@ public record DiffMethodResponse(
                 .orElseThrow(() -> new IllegalStateException("Target class not found"));
 
         for (MethodDeclaration method : addedMethods) {
-            ApplicableDiff.addOrReplaceMethod(method, clazz);
+            DiffUtils.addOrReplaceMethod(clazz, method);
         }
 
         try {
