@@ -41,8 +41,12 @@ public class DiffUtils {
         TypeDeclaration<?> targetClazz = base.findFirst(
                 TypeDeclaration.class,
                 c -> PackageManager.resolveTypeDeclaration(c).equals(targetFullName)
-        ).orElseThrow();
+        ).orElse(null);
 
+        if (targetClazz == null) {
+            base.addMember(toEnrich);
+            return;
+        }
 
         for (BodyDeclaration<?> member : toEnrich.getMembers()) {
 
