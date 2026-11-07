@@ -93,7 +93,7 @@ public record DiffClassResponse(
 
             DiffUtils.getChildren(changes, MethodDeclaration.class).forEach(m -> DiffUtils.addOrReplaceMethod(originalClazz, m));
             DiffUtils.getChildren(changes, TypeDeclaration.class).forEach(t -> DiffUtils.enrichClass(originalClazz, t));
-            DiffUtils.getChildren(changes, FieldDeclaration.class).forEach(originalClazz::addMember);
+            DiffUtils.getChildren(changes, FieldDeclaration.class).forEach(f  -> DiffUtils.addFieldIfMissing(originalClazz, f));
 
             Files.writeString(toUpdatePath, originalCu.toString());
         } catch (IOException e) {

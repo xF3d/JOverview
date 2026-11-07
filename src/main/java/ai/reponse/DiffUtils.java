@@ -1,14 +1,12 @@
 package ai.reponse;
 
 import com.github.javaparser.ast.NodeList;
-import com.github.javaparser.ast.body.BodyDeclaration;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.TypeDeclaration;
+import com.github.javaparser.ast.body.*;
 import translate.structure.pkg.PackageManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class DiffUtils {
     public static <T> List<T> getChildren(ClassOrInterfaceDeclaration n, Class<T> type) {
@@ -58,22 +56,8 @@ public class DiffUtils {
 
             // Fields
             if (member.isFieldDeclaration()) {
-                var newField = member.asFieldDeclaration();
-
-                var existingField = targetClazz.getMembers().stream()
-                        .filter(BodyDeclaration::isFieldDeclaration)
-                        .map(BodyDeclaration::asFieldDeclaration)
-                        .filter(field -> field.getVariables().stream()
-                                .anyMatch(newVar -> newField.getVariables().stream()
-                                        .anyMatch(v -> v.getNameAsString()
-                                                .equals(newVar.getNameAsString()))))
-                        .findFirst();
-
-                if (existingField.isPresent()) {
-                    continue;
-                }
-
-                targetClazz.addMember(newField.clone());
+                FieldDeclaration newField = member.asFieldDeclaration();
+                addFieldIfMissing(targetClazz, newField);
             }
 
             // Type decls
@@ -83,5 +67,23 @@ public class DiffUtils {
             }
         }
 
+    }
+
+    public static void addFieldIfMissing(TypeDeclaration<?> typeDefinition, FieldDeclaration newField) {
+
+        Optional<FieldDeclaration> existingField = typeDefinition.getMembers().stream()
+                .filter(BodyDeclaration::isFieldDeclaration)
+                .map(BodyDeclaration::asFieldDeclaration)
+                .filter(field -> field.getVariables().stream()
+                        .anyMatch(newVar -> newField.getVariables().stream()
+                                .anyMatch(v -> v.getNameAsString()
+                                        .equals(newVar.getNameAsString()))))
+                .findFirst();
+
+        if (existingField.isPresent()) {
+            return;
+        }
+
+        typeDefinition.addMember(newField.clone());
     }
 }
