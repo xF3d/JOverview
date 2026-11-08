@@ -9,6 +9,7 @@ import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import translate.translator.ComplexityTranslator;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +44,12 @@ public class PromptResponsePanel extends JScrollPane {
 
         main.add(explanationArea);
         main.add(notesArea);
+
+        getVerticalScrollBar().setUnitIncrement(32);
+        getHorizontalScrollBar().setUnitIncrement(32);
+        SwingUtilities.invokeLater(() -> {
+            getViewport().setViewPosition(new Point(0, 0));
+        });
     }
 
     private void setupMethod(DiffMethodResponse response, JPanel main) {
