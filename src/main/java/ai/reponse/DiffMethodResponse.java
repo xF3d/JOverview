@@ -2,6 +2,7 @@ package ai.reponse;
 
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.CallableDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import file.FileLogger;
@@ -105,13 +106,13 @@ public record DiffMethodResponse(
                 .anyMatch(decl -> decl.getSignature().asString().equals(method));
     }
 
-    public List<MethodDeclaration> getAddedMethods() {
-        ArrayList<MethodDeclaration> addedMethods = new ArrayList<>();
+    public List<CallableDeclaration<?>> getAddedMethods() {
+        ArrayList<CallableDeclaration<?>> addedMethods = new ArrayList<>();
         String toParse = "class DUMMY {\n" + codeMethods() + "}\n";
         ParseResult<CompilationUnit> result = ProjectJavaParser.makeParser().get().parse(toParse);
         if (result.isSuccessful() && result.getResult().isPresent()) {
             CompilationUnit codeCu = result.getResult().get();
-            codeCu.findAll(MethodDeclaration.class, addedMethods::add);
+            codeCu.findAll(CallableDeclaration.class, addedMethods::add);
             return addedMethods;
         } else {
             FileLogger.LOGGER.warning("Invalid Apply Patch Method: Parsing");
@@ -141,7 +142,7 @@ public record DiffMethodResponse(
         }
 
         MethodDeclaration originalMethod = newTranslator.getMethodDeclaration(clazz, method);
-        List<MethodDeclaration> addedMethods = getAddedMethods();
+        List<CallableDeclaration<?>> addedMethods = getAddedMethods();
 
         // find declaring class
         TypeDeclaration<?> clazz = originalMethod.findAncestor(TypeDeclaration.class)
@@ -149,7 +150,7 @@ public record DiffMethodResponse(
                         cc -> cc.getFullyQualifiedName().equals(c.getFullyQualifiedName())))
                 .orElseThrow(() -> new IllegalStateException("Target class not found"));
 
-        for (MethodDeclaration method : addedMethods) {
+        for (CallableDeclaration<?> method : addedMethods) {
             DiffUtils.addOrReplaceMethod(clazz, method);
         }
 

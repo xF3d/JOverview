@@ -20,13 +20,13 @@ public class DiffUtils {
         return out;
     }
 
-    public static void addOrReplaceMethod(TypeDeclaration<?> typeDefinition, MethodDeclaration newMethod) {
+    public static void addOrReplaceMethod(TypeDeclaration<?> typeDefinition, CallableDeclaration<?> newMethod) {
         NodeList<BodyDeclaration<?>> members = typeDefinition.getMembers();
 
         for (int i = 0; i < members.size(); i++) {
             BodyDeclaration<?> m = members.get(i);
-            if (m instanceof MethodDeclaration md && md.getSignature().equals(newMethod.getSignature())) {
-                MethodDeclaration toAdd = newMethod.clone();
+            if (m instanceof CallableDeclaration<?> md && md.getSignature().equals(newMethod.getSignature())) {
+                CallableDeclaration<?> toAdd = newMethod.clone();
                 // AI tends to strip throws, stop it from doing it
                 if (newMethod.getThrownExceptions().isEmpty())
                     toAdd.setThrownExceptions(md.getThrownExceptions());
@@ -54,7 +54,7 @@ public class DiffUtils {
         for (BodyDeclaration<?> member : toEnrich.getMembers()) {
 
             // Methods
-            if (member instanceof MethodDeclaration newMethod) {
+            if (member instanceof CallableDeclaration<?> newMethod) {
                 addOrReplaceMethod(targetClazz, newMethod);
                 continue;
             }

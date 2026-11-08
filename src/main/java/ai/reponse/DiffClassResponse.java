@@ -2,10 +2,7 @@ package ai.reponse;
 
 import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.*;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.body.FieldDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.TypeDeclaration;
+import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.Name;
 import file.FileLogger;
 import translate.component.formatter.MemberFormatter;
@@ -92,7 +89,7 @@ public record DiffClassResponse(
             TypeDeclaration<?> changes = parseChanges();
             if (changes == null) throw new RuntimeException("impossible");
 
-            DiffUtils.getChildren(changes, MethodDeclaration.class).forEach(m -> DiffUtils.addOrReplaceMethod(originalClazz, m));
+            DiffUtils.getChildren(changes, CallableDeclaration.class).forEach(m -> DiffUtils.addOrReplaceMethod(originalClazz, m));
             DiffUtils.getChildren(changes, TypeDeclaration.class).forEach(t -> DiffUtils.enrichClass(originalClazz, t));
             DiffUtils.getChildren(changes, FieldDeclaration.class).forEach(f  -> DiffUtils.addFieldIfMissing(originalClazz, f));
 
