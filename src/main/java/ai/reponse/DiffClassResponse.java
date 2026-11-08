@@ -111,9 +111,15 @@ public record DiffClassResponse(
                 .filter(it -> it.getAccessSpecifier() == AccessSpecifier.PUBLIC)
                 .findFirst();
         String nameDecl;
+        // if public class not present, any name should do, but let's pick the first class
         if (typeDeclOpt.isEmpty()) {
-            // if public class not present, any name should do, but let's pick the first class
-            nameDecl = cu.getType(0).getNameAsString();
+            NodeList<TypeDeclaration<?>> types = cu.getTypes();
+            if (types.isEmpty()) {
+                return; // nothing or invalid
+            }
+
+            //noinspection SequencedCollectionMethodCanBeUsed
+            nameDecl = types.get(0).getNameAsString();
         } else {
             // if public class is present, must have the same name
             nameDecl = typeDeclOpt.get().getNameAsString();
