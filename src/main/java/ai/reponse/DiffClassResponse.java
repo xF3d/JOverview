@@ -70,8 +70,10 @@ public record DiffClassResponse(
             Path projectRoot = getSrcRoot(toUpdatePath);
             List<CompilationUnit> addedClasses = parseAdded();
 
+            Path relativePackage = projectRoot.relativize(toUpdatePath);
+            String packageDeclaration = relativePackage.toString().replace(File.separatorChar, '.');
             for (var clazz : addedClasses) {
-                applyAddClass(projectRoot, clazz);
+                applyAddClass(projectRoot, clazz, packageDeclaration);
             }
 
             CompilationUnit originalCu = newTranslator.getTypeDeclaration(clazz)
@@ -101,11 +103,15 @@ public record DiffClassResponse(
         }
     }
 
-    private void applyAddClass(Path toAdd, CompilationUnit cu) {
+    private void applyAddClass(Path toAdd, CompilationUnit cu, String defaultPackageDeclaration) {
         String packageDecl = cu.getPackageDeclaration()
                 .map(PackageDeclaration::getName)
                 .map(Name::asString)
-                .orElse("");
+                .orElse(null);
+        if (packageDecl == null) {
+            packageDecl = defaultPackageDeclaration;
+            cu.setPackageDeclaration(defaultPackageDeclaration);
+        }
 
         Optional<TypeDeclaration<?>> typeDeclOpt = cu.getTypes().stream()
                 .filter(it -> it.getAccessSpecifier() == AccessSpecifier.PUBLIC)
