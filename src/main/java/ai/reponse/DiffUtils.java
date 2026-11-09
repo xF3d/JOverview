@@ -2,11 +2,12 @@ package ai.reponse;
 
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.*;
-import translate.structure.pkg.PackageManager;
+import translate.component.formatter.MemberFormatter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class DiffUtils {
     public static <T> List<T> getChildren(TypeDeclaration<?> n, Class<T> type) {
@@ -39,20 +40,23 @@ public class DiffUtils {
         typeDefinition.addMember(newMethod.clone());
     }
 
-    public static void enrichClass(TypeDeclaration<?> base, TypeDeclaration<?> toEnrich) {
-        String targetFullName = PackageManager.resolveTypeDeclaration(toEnrich);
+    public static void enrichClass(TypeDeclaration<?> base, TypeDeclaration<?> usedToEnrich) {
+        String targetFullName = MemberFormatter.fullSimpleName(usedToEnrich);
         TypeDeclaration<?> targetClazz = base.findFirst(
                 TypeDeclaration.class,
-                c -> PackageManager.resolveTypeDeclaration(c).equals(targetFullName)
+                c -> MemberFormatter.fullSimpleName(c).equals(targetFullName)
         ).orElse(null);
 
         if (targetClazz == null) {
-            base.addMember(toEnrich);
+            base.addMember(usedToEnrich);
             return;
         }
 
-        for (BodyDeclaration<?> member : toEnrich.getMembers()) {
+        if (base instanceof EnumDeclaration baseEd && usedToEnrich instanceof EnumDeclaration usedEd) {
+            enrichEnum(baseEd, usedEd);
+        }
 
+        for (BodyDeclaration<?> member : usedToEnrich.getMembers()) {
             // Methods
             if (member instanceof CallableDeclaration<?> newMethod) {
                 addOrReplaceMethod(targetClazz, newMethod);
@@ -90,5 +94,24 @@ public class DiffUtils {
         }
 
         typeDefinition.addMember(newField.clone());
+    }
+
+    private static void enrichEnum(EnumDeclaration base, EnumDeclaration usedToEnrich) {
+        var baseEntries = base.getEntries();
+        var presentEntries = baseEntries.stream().map(EnumConstantDeclaration::getNameAsString).collect(Collectors.toSet());
+
+        for (EnumConstantDeclaration decl : usedToEnrich.getEntries()) {
+            String declNameStr = decl.getNameAsString();
+            if (!presentEntries.contains(declNameStr)) {
+                base.addEntry(decl);
+                continue;
+            }
+
+            for (EnumConstantDeclaration declBase : baseEntries) {
+                if (declBase.getNameAsString().equals(declNameStr)) {
+                    declBase.setClassBody(decl.getClassBody());
+                }
+            }
+        }
     }
 }

@@ -70,7 +70,7 @@ public record DiffClassResponse(
             Path projectRoot = getSrcRoot(toUpdatePath);
             List<CompilationUnit> addedClasses = parseAdded();
 
-            Path relativePackage = projectRoot.relativize(toUpdatePath);
+            Path relativePackage = projectRoot.relativize(toUpdatePath).getParent();
             String packageDeclaration = relativePackage.toString().replace(File.separatorChar, '.');
             for (var clazz : addedClasses) {
                 applyAddClass(projectRoot, clazz, packageDeclaration);
@@ -194,20 +194,26 @@ public record DiffClassResponse(
     public TypeDeclaration<?> parseChanges() {
         var parser = ProjectJavaParser.makeParser().get();
         var allChanges = String.join("\n", changes);
+        String className = getClassName();
 
         // sometimes the AI generates the class wrapping by itself by mistake
         ParseResult<CompilationUnit> cuResult = parser.parse(allChanges);
         if (cuResult.isSuccessful()) {
             CompilationUnit cu = cuResult.getResult().orElseThrow();
-            if (cu.getTypes().stream().anyMatch(it -> PackageManager.resolveTypeDeclaration(it).equals(clazz))) {
+            if (cu.getTypes().stream().anyMatch(it -> {
+                var fullName = PackageManager.resolveTypeDeclaration(it);
+
+                // doesn't happen often, but better safe than sorry
+                if (fullName.equals(clazz)) return true;
+
+                // most of said "validish" changes only have the same class name
+                return className.equals(clazz);
+            })) {
                 return cu.getTypes().getFirst().orElseThrow();
             }
         }
 
-
-        String toParser = "class DUMMY {\n"
-                + allChanges
-                + "\n}";
+        String toParser = makeParsableNested(className, allChanges);
         cuResult = parser.parse(toParser);
 
         if (cuResult.isSuccessful()) {
@@ -215,11 +221,27 @@ public record DiffClassResponse(
 
             return cu.findFirst(
                     ClassOrInterfaceDeclaration.class,
-                    c -> c.getNameAsString().equals("DUMMY")
+                    c -> MemberFormatter.fullSimpleName(c).equals(className)
             ).orElseThrow();
         }
 
         return null;
+    }
+
+    private static String makeParsableNested(String className, String allChanges) {
+        String[] split = MemberFormatter.INNER_CLASS_PATTERN.split(className);
+        StringBuilder out = new StringBuilder();
+
+        for (String curr : split) {
+            out.append("class ")
+                    .append(curr)
+                    .append(" {");
+        }
+
+        out.append(allChanges);
+        out.append("}".repeat(split.length));
+
+        return out.toString();
     }
 
     public NodeList<ImportDeclaration> parseImports() {
@@ -274,5 +296,10 @@ public record DiffClassResponse(
         );
 
         return new SectionData(map).toString();
+    }
+
+    public String getClassName() {
+        var split = MemberFormatter.PACKAGE_PATTERN.split(clazz);
+        return split[split.length - 1];
     }
 }
