@@ -235,11 +235,11 @@ public record DiffClassResponse(
         for (String curr : split) {
             out.append("class ")
                     .append(curr)
-                    .append(" {");
+                    .append(" {\n");
         }
 
         out.append(allChanges);
-        out.append("}".repeat(split.length));
+        out.append("\n}".repeat(split.length));
 
         return out.toString();
     }
