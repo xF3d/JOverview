@@ -207,7 +207,7 @@ public record DiffClassResponse(
                 if (fullName.equals(clazz)) return true;
 
                 // most of said "validish" changes only have the same class name
-                return className.equals(clazz);
+                return className.equals(MemberFormatter.fullSimpleName(it));
             })) {
                 return cu.getTypes().getFirst().orElseThrow();
             }
